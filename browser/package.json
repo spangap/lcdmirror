@@ -1,0 +1,17 @@
+{
+  "name": "lcdmirror",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Browser-side screen mirror: a <canvas> that shows the device's live LCD over a WebRTC DataChannel and sends click/drag back to drive the real UI.",
+  "license": "Apache-2.0",
+  "exports": {
+    "./modules/*": "./src/modules/*.ts",
+    "./panels/*.vue": "./src/panels/*.vue"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.0",
+    "quasar": "^2.17.0",
+    "pinia": "^3.0.4",
+    "spangap-browser": "*"
+  }
+}

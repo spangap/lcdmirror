@@ -1,0 +1,9 @@
+description: "lcdmirror: VNC-style mirror of the on-device LCD to a browser canvas over WebRTC — RLE dirty-rect stream out, pointer input back."
+url: https://github.com/spangap/lcdmirror
+version: "0.1.0"
+license: "Apache-2.0"
+targets:
+  - esp32s3
+dependencies:
+  idf:
+    version: ">=5.5"

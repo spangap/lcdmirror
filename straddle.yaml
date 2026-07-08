@@ -1,0 +1,50 @@
+# lcdmirror — mirror the on-device LCD to a browser (a VNC-style screen share).
+#
+# The device streams changed screen regions (dirty rectangles, RLE-compressed)
+# out over a WebRTC DataChannel and the browser sends click/drag back, driving
+# the *same* LVGL context the physical panel drives. It is a mirror of the real
+# device screen, not a second independently-rendered UI (that is spangap-web's
+# SPA). Think "look at and poke the device's actual launcher from a laptop".
+#
+# Two halves:
+#   - esp-idf/  the `lcdmirror` task: ITS packet server, capture ring, RLE encoder,
+#               keyframe-on-connect, backpressure→drop-the-DC, and the LVGL seam
+#               (taps -lcd's framebuffer via lcdMirrorAttach, injects the remote
+#               pointer via lcdMirrorInjectPointer, holds the panel awake via
+#               lcdMirrorKeepAwake). RLE/ITS/WebRTC never touch the lcd task — the
+#               sink only memcpys a strip into the ring.
+#   - browser/  the <canvas> mirror app + WebRTC DataChannel.
+#
+# Hard-requires spangap-lcd (the screen it mirrors) and spangap-web (the WebRTC
+# DataChannel↔ITS router). The dependency is strictly one-way — spangap-lcd never
+# refers back — so a panel with no web stack, or a headless build, simply doesn't
+# stage this. It rides on the screen board (hw-tdeck additional_installs it).
+schema_version: 1
+name: spangap/lcdmirror
+prefix: lcdmirror
+version: 0.0.0
+firmware: esp-idf
+browser: browser
+platforms: [idf]
+requires:
+  - spangap/spangap-lcd
+  - spangap/spangap-web
+# One boot-registered service: LcdmirrorService spawns the `lcdmirror` task, which
+# opens the ITS port, streams keyframes/dirty-rects and injects the remote pointer.
+services:
+  - { class: LcdmirrorService, header: lcdmirror.h }
+# Browser-side UI registration — auto-wired into the buildable SPA via
+# straddles.gen.ts. Adds the "Screen" Dock app + its mirror window.
+browser_register:
+  - call: registerLcdMirror
+# Declarative settings: the Screen-mirror pane (LCD + web) and storage defaults.
+# `enabled` gates whether the device accepts a client at all; `lcdmirror.clients`
+# is an ephemeral live count shown read-only.
+settings:
+  - menu:
+      - { id: lcdmirror, label: "Screen Mirror" }
+    rows:
+      - section: "Screen Mirror"
+      - switch: { label: "Allow remote viewing", key: "s.lcdmirror.enabled", default: 1 }
+      - value:  { label: "Clients", key: "lcdmirror.clients" }
+      - caption: "Mirror this screen to a browser (the Screen app in the web UI). Click/drag in the browser drives the real device UI. One client at a time."
