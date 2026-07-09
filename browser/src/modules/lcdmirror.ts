@@ -6,14 +6,20 @@
  * ("lcdmirror:1", reliable+ordered). Click/drag in the canvas is mapped to panel
  * coordinates and sent back, driving the same LVGL UI the physical panel drives.
  *
- * This module owns the Dock registration + window-visibility refs; the DataChannel
- * lifecycle and pixel decode live in the LcdMirrorWindow component (which owns the
- * canvas). The wire format is defined in the firmware lcdmirror.h.
+ * This module owns the Dock + window-mount registration and the visibility refs;
+ * the DataChannel lifecycle and pixel decode live in the LcdMirrorWindow component
+ * (which owns the canvas). The wire format is defined in the firmware lcdmirror.h.
  */
 import { ref } from 'vue'
 import { registerApp } from 'spangap-browser/lib/apps'
+import { registerWindowMount } from 'spangap-browser/lib/windowMounts'
+/* Import cycle with the panel (it pulls the wire-format constants from here) —
+ * benign: both sides only touch the other's bindings from inside functions,
+ * never at module-eval time. */
+import LcdMirrorWindow from '../panels/LcdMirrorWindow.vue'
 
-/* Window visibility + focus nonce — MainLayout binds these to the window. */
+/* Window visibility + focus nonce — <StraddleWindows/> binds these to the
+ * window through the mount registered below. */
 export const lcdMirrorVisible = ref(false)
 export const lcdMirrorFocus = ref(0)
 
@@ -31,6 +37,13 @@ export function registerLcdMirror() {
     placement: 8,
     open: showLcdMirror,
     isOpen: () => lcdMirrorVisible.value,
+  })
+  registerWindowMount({
+    id: 'lcdmirror',
+    title: 'LCD mirror',
+    component: LcdMirrorWindow,
+    visible: lcdMirrorVisible,
+    focusToken: lcdMirrorFocus,
   })
 }
 

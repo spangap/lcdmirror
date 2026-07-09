@@ -17,8 +17,10 @@
 #
 # Hard-requires spangap-lcd (the screen it mirrors) and spangap-web (the WebRTC
 # DataChannel↔ITS router). The dependency is strictly one-way — spangap-lcd never
-# refers back — so a panel with no web stack, or a headless build, simply doesn't
-# stage this. It rides on the screen board (hw-tdeck additional_installs it).
+# refers back — so a headless build simply doesn't stage this. It rides on the
+# screen itself (spangap-lcd additional_installs it, gated `when: spangap-web`),
+# so an LCD build that already has the web stack gains the mirror, while a
+# web-less LCD build stays web-less. Drop it with --without lcdmirror.
 schema_version: 1
 name: spangap/lcdmirror
 prefix: lcdmirror
