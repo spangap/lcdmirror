@@ -148,7 +148,10 @@ function build(pc: RTCPeerConnection) {
   }
   dc.binaryType = 'arraybuffer'
   dc.onopen = () => { backoff = 250; statusText.value = 'Waiting for screen…' }
-  dc.onmessage = (ev) => { if (ev.data instanceof ArrayBuffer) onPacket(ev.data) }
+  dc.onmessage = (ev) => {
+    getSession().noteDcActivity()
+    if (ev.data instanceof ArrayBuffer) onPacket(ev.data)
+  }
   dc.onclose = () => { dc = null; live.value = false; scheduleReopen() }
   dc.onerror = () => { /* onclose follows */ }
 }

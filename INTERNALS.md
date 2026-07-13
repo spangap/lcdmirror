@@ -123,9 +123,12 @@ webrtc router parses the label as `<taskName>:<port>` and calls
 `itsConnect("lcdmirror", 1, …)` — so the task **must** be named `lcdmirror` (the
 launcher task is `lcd`; do not collide). Port `LCDMIRROR_PORT = 1`,
 `maxHandles = 1` (single session, also enforced by the signalling WS). The router
-pins this DC to priority 64 — below the control channels (storage/log/cli, 256) —
-so bulk pixel data can never delay the storage heartbeat on the shared SCTP
-association. A freshly-connected client is held idle for `ACTIVATE_MS` (1.5 s)
+pins this DC to priority 64 — below the control channels (log/cli at the
+browser-default 256, storage pinned to 512) — so bulk pixel data can never delay
+the storage heartbeat on the shared SCTP association. On the browser side each
+inbound frame is also reported to the shared session's liveness check
+(`getSession().noteDcActivity()`), so a mirror burst that queues the storage
+pong behind it still counts as proof the link is alive. A freshly-connected client is held idle for `ACTIVATE_MS` (1.5 s)
 before capture attaches: a busy device can flap a new session a few times before
 it sticks, and piling a keyframe onto that fragile window makes it worse.
 
