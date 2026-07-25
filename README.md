@@ -15,7 +15,7 @@ solid-fill launcher theme.
 
 Hard dependencies, one-way: `spangap-lcd` (the screen it mirrors) and
 `spangap-web` (the WebRTC DataChannel↔ITS router). It stages on a screen board —
-`hw-tdeck` pulls it in the way it pulls in `spangap-lcd` — so a screenless /
+`hw-lilygo-tdeck` pulls it in the way it pulls in `spangap-lcd` — so a screenless /
 headless build never includes it. Drop it from a screen build with
 `--without lcdmirror` for a panel-only image.
 
