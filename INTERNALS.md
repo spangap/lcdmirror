@@ -18,8 +18,13 @@ Maintainer reference for the browser screen-mirror. Operator guide: [README.md](
     (`mirrorSchedule`), because lcdRun rides the lcd task's shallow ITS aux inbox
     — the same inbox storage delivers CHANGED on — and flooding it backs up
     storage's subscriber delivery.
-  - `lcdMirrorKeepAwake(on)` — wakes the panel and suspends the inactivity blank
-    timer while a client is connected (`s_mirrorHold` gates `armBlankTimer`).
+  - `lcdMirrorKeepAwake(on)` — suspends the inactivity blank timer while a client
+    is connected (`s_mirrorHold` gates `armBlankTimer`) and leaves standby by
+    clearing `sys.standby`, the board's own wake path. It must be that key and not
+    a direct `lcdScreenWake()`: the board keeps its own standby state off the key,
+    and a panel lit behind its back leaves `sys.standby` set — the blank timer's
+    later `sys.standby = 1` is then deduped by storage into nothing, no subscriber
+    sees it, and the screen never blanks again.
 - **This straddle**: the `lcdmirror` FreeRTOS task (ITS packet server,
   framebuffer + damage box, RLE encoder, keyframe/backpressure state machine,
   pointer/key inject) and the browser `<canvas>` app.
@@ -143,3 +148,12 @@ it sticks, and piling a keyframe onto that fragile window makes it worse.
   task; the sink is memcpy-only.
 - **Single owner for `s_client`.** Only the `lcdmirror` task reads/writes it; the
   sink never touches it (it only feeds the ring, drained regardless of client).
+- **Every session end goes through `clientGone`.** It is what releases the
+  keep-awake hold, so a session that ends without it strands the panel awake with
+  the inactivity timeout suspended. Three routes reach it, and all three must
+  stay: the peer's `onDisconnect`, our own `dropClient` (stuck / disabled), and
+  the loop's `itsServerActive(LCDMIRROR_PORT) == 0` backstop for a disconnect
+  notification that was dropped on a full inbox — the connection table is the
+  authority on whether a session still exists. `onDisconnect` is scoped to the
+  handle it was accepted with (returned from `onConnect` as the serverRef), so a
+  late callback for a session already reaped cannot tear down its successor.

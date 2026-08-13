@@ -266,10 +266,14 @@ static int onConnect(int handle, const void* /*data*/, size_t /*len*/) {
     s_active = false;
     s_activateAt = xTaskGetTickCount() + pdMS_TO_TICKS(ACTIVATE_MS);
     info("client connected (handle %d) — settling\n", handle);
-    return 0;
+    return handle;   /* serverRef: identifies the session in onDisconnect */
 }
 
-static void onDisconnect(int /*ref*/) {
+/* ref is the handle onConnect returned. Scope the teardown to it: the loop's
+ * gone-connection backstop may have torn this session down already (and a fresh
+ * client taken its place), and tearing THAT one down would blind a live mirror. */
+static void onDisconnect(int ref) {
+    if (ref != s_client) return;
     info("client disconnected\n");
     clientGone();
 }
@@ -317,6 +321,19 @@ static void lcdmirrorTask(void*) {
          * screen send below is. */
         itsPoll(pdMS_TO_TICKS(POLL_MS));
         while (itsPoll(0)) {}
+
+        /* A session can also end WITHOUT a disconnect callback: the closing side
+         * frees the connection before it notifies, and that notify is dropped if
+         * this task's inbox stays full past the sender's timeout (this task is
+         * prio 1 behind the render task on the same core, so it can be starved
+         * that long). The connection table is the authority — a client no longer
+         * in it is gone, so end the session here too. Without this the mirror
+         * would hold the panel awake forever on a static screen, where the
+         * congestion detector below never runs. */
+        if (s_client >= 0 && itsServerActive(LCDMIRROR_PORT) == 0) {
+            warn("connection vanished\n");
+            clientGone();
+        }
         if (s_client < 0) { lastSend = xTaskGetTickCount(); continue; }
 
         /* Hold off capture until the session has survived ACTIVATE_MS. Until then
