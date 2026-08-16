@@ -43,7 +43,7 @@ browser_register:
 # `enabled` gates whether the device accepts a client at all; `lcdmirror.clients`
 # is an ephemeral live count shown read-only.
 settings:
-  - menu:
+  - at:
       - { id: lcdmirror, label: "Screen Mirror" }
     rows:
       - section: "Screen Mirror"
