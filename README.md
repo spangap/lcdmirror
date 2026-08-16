@@ -28,7 +28,7 @@ or takes over with `?force=1`). While a client is connected the panel is held
 awake (no inactivity blank) so the mirror never goes dark; it reverts to the
 normal timeout when the client leaves.
 
-Turn remote viewing off from **Settings → Screen Mirror → Allow remote viewing**
+Turn remote viewing off from **Settings → Apps → Screen Mirror → Allow remote viewing**
 (or `set s.lcdmirror.enabled=0`); a connected client is dropped immediately.
 
 ## How it works (brief)

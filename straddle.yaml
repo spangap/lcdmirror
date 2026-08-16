@@ -44,6 +44,7 @@ browser_register:
 # is an ephemeral live count shown read-only.
 settings:
   - at:
+      - { id: apps }
       - { id: lcdmirror, label: "Screen Mirror" }
     rows:
       - section: "Screen Mirror"
